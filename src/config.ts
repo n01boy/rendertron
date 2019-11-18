@@ -37,11 +37,11 @@ export type Config = {
 
 export class ConfigManager {
     public static config: Config = {
-        cache: null,
+        cache: 'memory',
         timeout: 10000,
-        port: '3000',
+        port: '80',
         host: '0.0.0.0',
-        width: 1000,
+        width: 375,
         height: 1000,
         headers: {}
     };
