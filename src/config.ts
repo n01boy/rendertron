@@ -37,12 +37,12 @@ export type Config = {
 
 export class ConfigManager {
     public static config: Config = {
-        cache: 'memory',
+        cache: null,
         timeout: 10000,
         port: '80',
         host: '0.0.0.0',
-        width: 375,
-        height: 1000,
+        width: 400,
+        height: 1200,
         headers: {}
     };
 
@@ -54,4 +54,3 @@ export class ConfigManager {
         return ConfigManager.config;
     }
 }
-

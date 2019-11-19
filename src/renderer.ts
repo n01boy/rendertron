@@ -14,7 +14,7 @@ type ViewportDimensions = {
 };
 
 const MOBILE_USERAGENT =
-    'Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.75 Mobile Safari/537.36';
+  'toricobot-Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.75 Mobile Safari/537.36';
 
 /**
  * Wraps Puppeteer's interface to Headless Chrome to expose high level rendering
@@ -30,7 +30,7 @@ export class Renderer {
   }
 
   async serialize(requestUrl: string, isMobile: boolean):
-      Promise<SerializedResponse> {
+    Promise<SerializedResponse> {
     /**
      * Executed on the page after the page has loaded. Strips script and
      * import tags to prevent further loading of resources.
@@ -71,10 +71,8 @@ export class Renderer {
     // https://github.com/GoogleChrome/puppeteer/blob/v1.10.0/docs/api.md#pagesetviewportviewport
     await page.setViewport({width: this.config.width, height: this.config.height, isMobile});
 
-    if (isMobile) {
-      page.setUserAgent(MOBILE_USERAGENT);
-    }
-
+    page.setUserAgent(MOBILE_USERAGENT);
+    console.log(MOBILE_USERAGENT);
     page.evaluateOnNewDocument('customElements.forcePolyfill = true');
     page.evaluateOnNewDocument('ShadyDOM = {force: true}');
     page.evaluateOnNewDocument('ShadyCSS = {shimcssproperties: true}');
@@ -93,7 +91,7 @@ export class Renderer {
     try {
       // Navigate to page. Wait until there are no oustanding network requests.
       response = await page.goto(
-          requestUrl, {timeout: this.config.timeout, waitUntil: 'networkidle0'});
+        requestUrl, {timeout: this.config.timeout, waitUntil: 'networkidle0'});
     } catch (e) {
       console.error(e);
     }
@@ -118,11 +116,11 @@ export class Renderer {
     // code.
     let statusCode = response.status();
     const newStatusCode =
-        await page
-            .$eval(
-                'meta[name="render:status_code"]',
-                (element) => parseInt(element.getAttribute('content') || ''))
-            .catch(() => undefined);
+      await page
+        .$eval(
+          'meta[name="render:status_code"]',
+          (element) => parseInt(element.getAttribute('content') || ''))
+        .catch(() => undefined);
     // On a repeat visit to the same origin, browser cache is enabled, so we may
     // encounter a 304 Not Modified. Instead we'll treat this as a 200 OK.
     if (statusCode === 304) {
@@ -152,45 +150,49 @@ export class Renderer {
           }
           return JSON.stringify([...result]);
         })
-        .catch(() => undefined);
+      .catch(() => undefined);
 
     // Remove script & import tags.
     await page.evaluate(stripPage);
     // Inject <base> tag with the origin of the request (ie. no path).
     const parsedUrl = url.parse(requestUrl);
     await page.evaluate(
-        injectBaseHref, `${parsedUrl.protocol}//${parsedUrl.host}`);
+      injectBaseHref, `${parsedUrl.protocol}//${parsedUrl.host}`);
 
     // Serialize page.
     const pageContent = await page.content();
     const result = pageContent.replace(/data-src=/g, 'src=').replace(/lazy="loading"/g, '');
 
     await page.close();
-    return {status: statusCode, customHeaders: customHeaders ? new Map(JSON.parse(customHeaders)) : new Map(), content: result};
+    return {
+      status: statusCode,
+      customHeaders: customHeaders ? new Map(JSON.parse(customHeaders)) : new Map(),
+      content: result
+    };
   }
 
   async screenshot(
-      url: string,
-      isMobile: boolean,
-      dimensions: ViewportDimensions,
-      options?: object): Promise<Buffer> {
+    url: string,
+    isMobile: boolean,
+    dimensions: ViewportDimensions,
+    options?: object): Promise<Buffer> {
     const page = await this.browser.newPage();
 
     // Page may reload when setting isMobile
     // https://github.com/GoogleChrome/puppeteer/blob/v1.10.0/docs/api.md#pagesetviewportviewport
     await page.setViewport(
-        {width: dimensions.width, height: dimensions.height, isMobile});
+      {width: dimensions.width, height: dimensions.height, isMobile});
 
     if (isMobile) {
       page.setUserAgent(MOBILE_USERAGENT);
     }
 
-    let response: puppeteer.Response|null = null;
+    let response: puppeteer.Response | null = null;
 
     try {
       // Navigate to page. Wait until there are no oustanding network requests.
       response =
-          await page.goto(url, {timeout: 10000, waitUntil: 'networkidle2'});
+        await page.goto(url, {timeout: 10000, waitUntil: 'networkidle0'});
     } catch (e) {
       console.error(e);
     }
@@ -209,7 +211,7 @@ export class Renderer {
 
     // Must be jpeg & binary format.
     const screenshotOptions =
-        Object.assign({}, options, {type: 'jpeg', encoding: 'binary'});
+      Object.assign({}, options, {type: 'jpeg', encoding: 'binary'});
     // Screenshot returns a buffer based on specified encoding above.
     // https://github.com/GoogleChrome/puppeteer/blob/v1.8.0/docs/api.md#pagescreenshotoptions
     const buffer = await page.screenshot(screenshotOptions) as Buffer;
@@ -218,7 +220,7 @@ export class Renderer {
   }
 }
 
-type ErrorType = 'Forbidden'|'NoResponse';
+type ErrorType = 'Forbidden' | 'NoResponse';
 
 export class ScreenshotError extends Error {
   type: ErrorType;
