@@ -8,8 +8,8 @@ import * as path from 'path';
 import * as puppeteer from 'puppeteer';
 import * as url from 'url';
 
-import { Renderer, ScreenshotError } from './renderer';
-import { Config, ConfigManager } from './config';
+import {Renderer, ScreenshotError} from './renderer';
+import {Config, ConfigManager} from './config';
 
 /**
  * Rendertron rendering service. This runs the server which routes rendering
@@ -29,7 +29,7 @@ export class Rendertron {
     this.port = this.port || this.config.port;
     this.host = this.host || this.config.host;
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({args: ['--no-sandbox']});
     this.renderer = new Renderer(browser, this.config);
 
     this.app.use(koaLogger());
@@ -40,17 +40,17 @@ export class Rendertron {
 
     this.app.use(route.get('/', async (ctx: Koa.Context) => {
       await koaSend(
-        ctx, 'index.html', { root: path.resolve(__dirname, '../src') });
+        ctx, 'index.html', {root: path.resolve(__dirname, '../src')});
     }));
     this.app.use(
       route.get('/_ah/health', (ctx: Koa.Context) => ctx.body = 'OK'));
 
     // Optionally enable cache for rendering requests.
     if (this.config.cache === 'datastore') {
-      const { DatastoreCache } = await import('./datastore-cache');
+      const {DatastoreCache} = await import('./datastore-cache');
       this.app.use(new DatastoreCache().middleware());
     } else if (this.config.cache === 'memory') {
-      const { MemoryCache } = await import('./memory-cache');
+      const {MemoryCache} = await import('./memory-cache');
       this.app.use(new MemoryCache().middleware());
     }
 
@@ -89,6 +89,10 @@ export class Rendertron {
     if (this.restricted(url)) {
       ctx.status = 403;
       return;
+    }
+
+    if (ctx.request.originalUrl.indexOf('?') >= 0) {
+      url = `${url}?${ctx.request.originalUrl.split('?')[1]}`;
     }
 
     const mobileVersion = true;
